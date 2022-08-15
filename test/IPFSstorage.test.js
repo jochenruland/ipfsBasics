@@ -1,5 +1,7 @@
+const assert = require('assert');
 
-import IPFS from "ipfs";
+import { create as ipfsHttpClient } from 'ipfs-http-client';
+const client = ipfsHttpClient('https://ipfs.infura.io:5001/api/v0');
 
 const options = {
     reconnect: {
@@ -10,7 +12,6 @@ const options = {
     }
 };
 
-
 const Web3 = require('web3');
 const provider = new Web3.providers.WebsocketProvider('http://127.0.0.1:7545', options);
 const web3 = new Web3(provider);
@@ -18,13 +19,11 @@ const web3 = new Web3(provider);
 const IPFSstorageJSON = require('../build/contracts/IPFSstorage.json');
 const deploymentKey = Object.keys(IPFSstorageJSON.networks)[0];
 
-const assert = require('assert');
-
 let accounts;
 let contractInstance;
 let sendParamaters;
 
-beforeEach(async () => {
+before(async () => {
   accounts = await web3.eth.getAccounts();
   contractInstance = new web3.eth.Contract(IPFSstorageJSON.abi, IPFSstorageJSON.networks[deploymentKey].address);
 
@@ -37,6 +36,9 @@ beforeEach(async () => {
 
 })
 
+let dataURL;
+let metadataURL;
+
 describe('Testing IPFSstorage on mainfork', () => {
   it('1. Contract available on mainfork', () => {
     console.log('Mainfork connected: ', accounts);
@@ -44,36 +46,68 @@ describe('Testing IPFSstorage on mainfork', () => {
     assert.ok(contractInstance.options.address);
   });
 
-  it('2. initializes a IPFS node', async () => {
-    node = await IPFS.create();
-    const version = await node.version();
-    console.log("IPFS Node Version:", version.version);
-    assert.ok(version.version);
-  });
+  it('2. Uploads data file to IPFS', async () => {
+    /* upload image to IPFS */
+    const dataFile = '../data/0.png';
 
-  it('3. Uploads file to IPFS', async (file) => {
-    const files = [{ path: file.name + file.path, content: file }];
-
-    for await (const result of node.add(files)) {
-      await setFile(result.cid.string);
-      }
+    try {
+      const added = await client.add(
+        dataFile,
+        {
+          progress: (prog) => console.log(`received: ${prog}`)
+        }
+      )
+      dataURL = `https://ipfs.infura.io/ipfs/${added.path}`;
+      console.log('DataFile .png URL', dataURL);
+    } catch (error) {
+      console.log('Error uploading .png file: ', error);
     }
 
-    console.log('...');
-
-    assert(parseInt(daiBalance) > parseInt(daiOnContractBefore));
+    assert.ok(added.path);
   });
 
-  it('4. Writes file hash to IPFSstorage smart contract', async (hash) => {
-    const ipfsWithSigner = ipfsContract.connect(defaultProvider.getSigner());
-    await ipfsWithSigner.setFile(hash);
-    setIpfsHash(hash);
+  it('3. Uploads metadata json to IPFS', async () => {
+
+    /**
+     * @dev - fetch metadata from input and create .json file
+     * const { name, description, price } = formInput
+
+     * if (!name || !description || !price || !fileUrl) return
+     */
+
+    const name = "Elefant von Hinten";
+    const description = "Elefant von Hinten Collection";
+
+
+    metadataFile = JSON.stringify({
+      name, description, image: dataURL
+    });
+
+    console.log(metadataFile);
+
+    /* upload .json metadata file to ipfs */
+
+    try {
+      const added = await client.add(metadataFile);
+      metadataURL = `https://ipfs.infura.io/ipfs/${added.path}`;
+      /* after metadata is uploaded to IPFS, return the URL to use it in the transaction */
+      console.log('Metadata URL', metadataURL);
+    } catch (error) {
+      console.log('Error uploading metada file: ', error)
+    }
+
+    assert.ok(added.path);
+  });
+
+
+  it('4. Writes file hash to IPFSstorage smart contract', async () => {
+    await contractInstance.methods.setFile(metadataURL).send(sendParamaters);
   });
 
   it('5. Reads current user file', async () => {
-      const result = await ipfsContract.userFiles(defaultProvider.getSigner().getAddress());
+      const result = await contractInstance.methods.metadataURLs(accounts[0]).call();
 
-      return result;
+      console.log('MetadataURL registered in smart contract', result);
   });
 
 });
