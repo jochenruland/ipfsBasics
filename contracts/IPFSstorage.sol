@@ -5,6 +5,6 @@ contract IPFSstorage {
   mapping(address => string) public metadataURLs;
 
   function setFile(string memory metadataURL) external {
-    files[msg.sender] = metadataURL;
+    metadataURLs[msg.sender] = metadataURL;
   }
 }
