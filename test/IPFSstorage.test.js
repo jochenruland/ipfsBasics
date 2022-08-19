@@ -1,7 +1,7 @@
 const assert = require('assert');
 
-import { create as ipfsHttpClient } from 'ipfs-http-client';
-const client = ipfsHttpClient('https://ipfs.infura.io:5001/api/v0');
+const ipfsClient = require('ipfs-http-client');
+const client = ipfsClient("https://ipfs.infura.io:5001/api/v0");
 
 const options = {
     reconnect: {
