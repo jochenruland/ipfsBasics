@@ -11,7 +11,7 @@
   "dependencies": {
     "ganache-cli": "^6.12.2",
     "ipfs": "^0.63.5",
-    "ipfs-http-client": "^57.0.3",
+    "ipfs-http-client": "^33.1.1",
     "web3": "^1.7.5"
   }
 }
