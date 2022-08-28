@@ -63,6 +63,7 @@ describe('Testing IPFSstorage on mainfork', () => {
     console.log("opening an existing file");
 
     const filePath = path.resolve(__dirname, '../data/', '0test.txt');
+    console.log(filePath);
 
     const file = fs.readFile(filePath, function (err, data) {
       if (err) {
@@ -106,9 +107,10 @@ describe('Testing IPFSstorage on mainfork', () => {
       )
 
       dataURL = `https://ipfs.infura.io/ipfs/${added1.path}`;
-      console.log('DataFile .png URL', dataURL);
+      console.log(`URL of ${filePath}`, dataURL);
     } catch (error) {
-      console.log('Error uploading .png file: ', error);
+      console.log(`added1.path value: ${added1.path}`);
+      console.log(`Error uploading file: ${filePath}`, error);
     }
 
     assert.ok(added.path);
