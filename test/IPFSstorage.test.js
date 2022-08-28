@@ -1,7 +1,16 @@
 const assert = require('assert');
+const path = require('path');
+const fs = require('fs');
 
 const ipfsClient = require('ipfs-http-client');
-const client = ipfsClient("https://ipfs.infura.io:5001/api/v0");
+const client = new ipfsClient("https://ipfs.infura.io:5001/api/v0");
+
+/**
+  * @dev current version of ipfs-http-client can't be required ; need to use version 33.1.1 or this actual api
+  * const IPFS = require('ipfs-api');
+  * const ipfs = new IPFS({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
+ */
+
 
 const options = {
     reconnect: {
@@ -23,6 +32,10 @@ let accounts;
 let contractInstance;
 let sendParamaters;
 
+
+let dataURL;
+let metadataURL;
+
 before(async () => {
   accounts = await web3.eth.getAccounts();
   contractInstance = new web3.eth.Contract(IPFSstorageJSON.abi, IPFSstorageJSON.networks[deploymentKey].address);
@@ -36,9 +49,6 @@ before(async () => {
 
 })
 
-let dataURL;
-let metadataURL;
-
 describe('Testing IPFSstorage on mainfork', () => {
   it('1. Contract available on mainfork', () => {
     console.log('Mainfork connected: ', accounts);
@@ -47,17 +57,55 @@ describe('Testing IPFSstorage on mainfork', () => {
   });
 
   it('2. Uploads data file to IPFS', async () => {
-    /* upload image to IPFS */
-    const dataFile = '../data/0.png';
 
+    //const buf = new Buffer(1024);
+
+    console.log("opening an existing file");
+
+    const filePath = path.resolve(__dirname, '../data/', '0test.txt');
+
+    const file = fs.readFile(filePath, function (err, data) {
+      if (err) {
+	       return console.error(err);
+       }
+      console.log("Reading file successful!");
+    });
+
+    /*
+    const file = fs.open(filePath, 'r+', function(err, fd) {
+      if (err) {
+	       return console.error(err);
+       }
+       console.log("File opened successfully!");
+
+
+       console.log("reading the file");
+
+       fs.read(fd, buf, 0, buf.length, 0, function(err, bytes){
+	        if (err){
+		          console.log(err);
+	        }
+	        console.log(bytes + " bytes read");
+
+	        // Print only read bytes to avoid junk.
+	        if(bytes > 0){
+		         console.log(buf.slice(0, bytes).toString());
+	        }
+        });
+
+    });
+    */
+
+    /* upload image to IPFS */
     try {
-      const added = await client.add(
-        dataFile,
+      const added1 = await client.add(
+        file,
         {
           progress: (prog) => console.log(`received: ${prog}`)
         }
       )
-      dataURL = `https://ipfs.infura.io/ipfs/${added.path}`;
+
+      dataURL = `https://ipfs.infura.io/ipfs/${added1.path}`;
       console.log('DataFile .png URL', dataURL);
     } catch (error) {
       console.log('Error uploading .png file: ', error);
@@ -79,7 +127,7 @@ describe('Testing IPFSstorage on mainfork', () => {
     const description = "Elefant von Hinten Collection";
 
 
-    metadataFile = JSON.stringify({
+    const metadataFile = JSON.stringify({
       name, description, image: dataURL
     });
 
@@ -88,8 +136,9 @@ describe('Testing IPFSstorage on mainfork', () => {
     /* upload .json metadata file to ipfs */
 
     try {
-      const added = await client.add(metadataFile);
-      metadataURL = `https://ipfs.infura.io/ipfs/${added.path}`;
+      const added2 = await client.add(metadataFile);
+      console.log(added);
+      metadataURL = `https://ipfs.infura.io/ipfs/${added2.path}`;
       /* after metadata is uploaded to IPFS, return the URL to use it in the transaction */
       console.log('Metadata URL', metadataURL);
     } catch (error) {
@@ -111,9 +160,3 @@ describe('Testing IPFSstorage on mainfork', () => {
   });
 
 });
-
-
-
-
-
-//-----------------------------------------------------------------
