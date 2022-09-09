@@ -2,14 +2,27 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 
-const ipfsClient = require('ipfs-http-client');
-const client = new ipfsClient("https://ipfs.infura.io:5001/api/v0");
+const { Buffer } = require('buffer');
 
 /**
-  * @dev current version of ipfs-http-client can't be required ; need to use version 33.1.1 or this actual api
-  * const IPFS = require('ipfs-api');
-  * const ipfs = new IPFS({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
- */
+  * @dev current version of ipfs-http-client can't be required ; need to use version 33.1.1
+  */
+const ipfsClient = require('ipfs-http-client');
+const projectId = '2CvMIxzc4PHC35AOU8K8RBpzQCI';
+const projectSecret = 'aeaecd73fe0435a694d08552540b414f';
+const auth =
+    'Basic ' + Buffer.from(projectId + ':' + projectSecret).toString('base64');
+
+const client = new ipfsClient({
+    host: 'ipfs.infura.io',
+    port: 5001,
+    protocol: 'https',
+    headers: {
+        authorization: auth,
+    },
+});
+
+console.log(client.getEndpointConfig());
 
 
 const options = {
@@ -62,59 +75,33 @@ describe('Testing IPFSstorage on mainfork', () => {
 
     console.log("opening an existing file");
 
-    const filePath = path.resolve(__dirname, '../data/', '0test.txt');
+    const filePath = path.resolve(__dirname, '../data/', '0.png');
     console.log(filePath);
 
-    const file = fs.readFile(filePath, function (err, data) {
-      if (err) {
-	       return console.error(err);
-       }
-      console.log("Reading file successful!");
-    });
-
-    /*
-    const file = fs.open(filePath, 'r+', function(err, fd) {
-      if (err) {
-	       return console.error(err);
-       }
-       console.log("File opened successfully!");
-
-
-       console.log("reading the file");
-
-       fs.read(fd, buf, 0, buf.length, 0, function(err, bytes){
-	        if (err){
-		          console.log(err);
-	        }
-	        console.log(bytes + " bytes read");
-
-	        // Print only read bytes to avoid junk.
-	        if(bytes > 0){
-		         console.log(buf.slice(0, bytes).toString());
-	        }
-        });
-
-    });
-    */
+    const file = fs.readFileSync(filePath);
 
     /* upload image to IPFS */
+
     try {
-      const added1 = await client.add(
+      const addImage = await client.add(
         file,
         {
           progress: (prog) => console.log(`received: ${prog}`)
         }
-      )
+      );
+      console.log(addImage);
 
-      dataURL = `https://ipfs.infura.io/ipfs/${added1.path}`;
+      dataURL = `https://ipfs.infura.io/ipfs/${addImage[0].path}`;
       console.log(`URL of ${filePath}`, dataURL);
     } catch (error) {
-      console.log(`added1.path value: ${added1.path}`);
+      console.log(`addImage[0].path value: ${addImage[0].path}`);
       console.log(`Error uploading file: ${filePath}`, error);
     }
 
-    assert.ok(added.path);
+    //assert.ok(addImage[0].path);
+
   });
+
 
   it('3. Uploads metadata json to IPFS', async () => {
 
@@ -135,19 +122,21 @@ describe('Testing IPFSstorage on mainfork', () => {
 
     console.log(metadataFile);
 
+    const buf = Buffer.from(metadataFile);
+
     /* upload .json metadata file to ipfs */
 
     try {
-      const added2 = await client.add(metadataFile);
-      console.log(added);
-      metadataURL = `https://ipfs.infura.io/ipfs/${added2.path}`;
+      const addMetadata = await client.add(buf);
+      console.log(addMetadata);
+      metadataURL = `https://ipfs.infura/ipfs/${addMetadata[0].path}`;
       /* after metadata is uploaded to IPFS, return the URL to use it in the transaction */
       console.log('Metadata URL', metadataURL);
     } catch (error) {
       console.log('Error uploading metada file: ', error)
     }
 
-    assert.ok(added.path);
+    //assert.ok(addMetadata[0].path);
   });
 
 
@@ -156,9 +145,17 @@ describe('Testing IPFSstorage on mainfork', () => {
   });
 
   it('5. Reads current user file', async () => {
-      const result = await contractInstance.methods.metadataURLs(accounts[0]).call();
+      console.log(accounts[0]);
+      console.log(contractInstance);
+      try {
+        let result = await contractInstance.methods.metadataURLs(accounts[0]).call({from: accounts[0]});
+        console.log('MetadataURL registered in smart contract', result);
 
-      console.log('MetadataURL registered in smart contract', result);
+      } catch(e) {
+        console.log("Error in calling metadataURLs mapping: ", e );
+      }
+
+
   });
 
 });
