@@ -1,3 +1,7 @@
+# API keys and others
+.secret
+API_KEYS.json
+
 # Logs
 logs
 *.log
