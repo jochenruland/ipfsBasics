@@ -8,8 +8,9 @@ const { Buffer } = require('buffer');
   * @dev current version of ipfs-http-client can't be required ; need to use version 33.1.1
   */
 const ipfsClient = require('ipfs-http-client');
-const projectId = '2CvMIxzc4PHC35AOU8K8RBpzQCI';
-const projectSecret = 'aeaecd73fe0435a694d08552540b414f';
+const apiKeys = require('../API_KEYS.json');
+const projectId = apiKeys.projectId;
+const projectSecret = apiKeys.projectSecret;
 const auth =
     'Basic ' + Buffer.from(projectId + ':' + projectSecret).toString('base64');
 
@@ -146,7 +147,7 @@ describe('Testing IPFSstorage on mainfork', () => {
 
   it('5. Reads current user file', async () => {
       console.log(accounts[0]);
-      console.log(contractInstance);
+  
       try {
         let result = await contractInstance.methods.metadataURLs(accounts[0]).call({from: accounts[0]});
         console.log('MetadataURL registered in smart contract', result);
