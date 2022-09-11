@@ -64,6 +64,7 @@ before(async () => {
 })
 
 describe('Testing IPFSstorage on mainfork', () => {
+
   it('1. Contract available on mainfork', () => {
     console.log('Mainfork connected: ', accounts);
     console.log('1. Contract address: ', contractInstance.options.address);
@@ -71,9 +72,6 @@ describe('Testing IPFSstorage on mainfork', () => {
   });
 
   it('2. Uploads data file to IPFS', async () => {
-
-    //const buf = new Buffer(1024);
-
     console.log("opening an existing file");
 
     const filePath = path.resolve(__dirname, '../data/', '0.png');
@@ -105,14 +103,7 @@ describe('Testing IPFSstorage on mainfork', () => {
 
 
   it('3. Uploads metadata json to IPFS', async () => {
-
-    /**
-     * @dev - fetch metadata from input and create .json file
-     * const { name, description, price } = formInput
-
-     * if (!name || !description || !price || !fileUrl) return
-     */
-
+    // create metadata .json file
     const name = "Elefant von Hinten";
     const description = "Elefant von Hinten Collection";
 
@@ -147,7 +138,7 @@ describe('Testing IPFSstorage on mainfork', () => {
 
   it('5. Reads current user file', async () => {
       console.log(accounts[0]);
-  
+
       try {
         let result = await contractInstance.methods.metadataURLs(accounts[0]).call({from: accounts[0]});
         console.log('MetadataURL registered in smart contract', result);
@@ -155,7 +146,6 @@ describe('Testing IPFSstorage on mainfork', () => {
       } catch(e) {
         console.log("Error in calling metadataURLs mapping: ", e );
       }
-
 
   });
 
