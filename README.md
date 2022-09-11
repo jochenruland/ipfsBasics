@@ -10,7 +10,7 @@ The scope of this project is simply to experiment with basic ipfs features using
 ## Special remarks
 latest version of `ipfs-http-client` did not work using `require()` - therefore I used `npm i --save ipfs-http-client@33.1.1`
 
-##License
+## License
 MIT License
 
 Copyright (c) 2022 JochenRuland
