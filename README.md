@@ -8,7 +8,16 @@ The scope of this project is simply to experiment with basic ipfs features using
 2. `IPFSstorage.test.js` - test script where files from `./data` folder are uploaded and the smart contract is updated    
 
 ## Special remarks
-latest version of `ipfs-http-client` did not work using `require()` - therefore I used `npm i --save ipfs-http-client@33.1.1`
+The lastest version of `ipfs-http-client` is ESM only. That means you cannot use `require()` to include the module. You have to `import` the module.
+There are different possibilities to use ESM with Node.js (cf. blogpost [here](https://blog.logrocket.com/how-to-use-ecmascript-modules-with-node-js/)),
+but that implies changing the JavaScript testfile  into a `.mjs`. This format is not supported by `truffle test`. Therefore I used an alternative, which
+is to import the ipfs-http-client at runtime using `import()` in an asynchronous function -> cf. `async function loadIPFSclient()` .
+Using that function, the mocha standard configuration might run into timeout. I increased the timeout parameter in `truffle-config.js`. 
+
+Another alternative is to use an older verion of the ipfs-http-client installing it with `npm i --save ipfs-http-client@33.1.1`. This older version
+can be included using `require()`. But the corresponding function of that older module might work different from time to time then describe in the
+lastest docs. For expemple the `.add()` function will not return an Object but an array including the object. So you have to address the first element of
+the array to access the object. I did an implementation with the older version fist, so you can find it checking the pull requests.
 
 ## License
 MIT License
