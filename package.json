@@ -11,8 +11,11 @@
   "dependencies": {
     "ganache-cli": "^6.12.2",
     "ipfs": "^0.63.5",
-    "ipfs-http-client": "^33.1.1",
+    "ipfs-http-client": "^58.0.0",
     "truffle": "^5.5.28",
     "web3": "^1.7.5"
+  },
+  "devDependencies": {
+    "@babel/plugin-transform-modules-commonjs": "^7.18.6"
   }
 }
