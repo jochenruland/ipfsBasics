@@ -5,25 +5,40 @@ const fs = require('fs');
 const { Buffer } = require('buffer');
 
 /**
-  * @dev current version of ipfs-http-client can't be required ; need to use version 33.1.1
+  * @dev current version of ipfs-http-client is ESM only
+  * @dev const ipfsClient = require('ipfs-http-client'); // only works with version 33.1.1
+  * const client = new ipfsClient({
+  *    host: 'ipfs.infura.io',
+  *    port: 5001,
+  *    protocol: 'https',
+  *    headers: {
+  *        authorization: auth,
+  *    },
+  * });
   */
-const ipfsClient = require('ipfs-http-client');
+
 const apiKeys = require('../API_KEYS.json');
 const projectId = apiKeys.projectId;
 const projectSecret = apiKeys.projectSecret;
 const auth =
     'Basic ' + Buffer.from(projectId + ':' + projectSecret).toString('base64');
 
-const client = new ipfsClient({
+async function loadIPFSclient() {
+  const { create } = await import('ipfs-http-client')
+
+  const node = await create({
     host: 'ipfs.infura.io',
     port: 5001,
     protocol: 'https',
     headers: {
-        authorization: auth,
-    },
-});
+        authorization: auth
+      }
+  })
 
-console.log(client.getEndpointConfig());
+  return node;
+}
+
+//console.log(client); //.getEndpointConfig()
 
 
 const options = {
@@ -49,6 +64,7 @@ let sendParamaters;
 
 let dataURL;
 let metadataURL;
+let client;
 
 before(async () => {
   accounts = await web3.eth.getAccounts();
@@ -61,6 +77,8 @@ before(async () => {
     gasPrice: web3.utils.toHex(20000000000)
   };
 
+  client = await loadIPFSclient();
+
 })
 
 describe('Testing IPFSstorage on mainfork', () => {
@@ -72,6 +90,7 @@ describe('Testing IPFSstorage on mainfork', () => {
   });
 
   it('2. Uploads data file to IPFS', async () => {
+
     console.log("opening an existing file");
 
     const filePath = path.resolve(__dirname, '../data/', '0.png');
@@ -90,14 +109,14 @@ describe('Testing IPFSstorage on mainfork', () => {
       );
       console.log(addImage);
 
-      dataURL = `https://ipfs.infura.io/ipfs/${addImage[0].path}`;
+      dataURL = `https://ipfs.infura.io/ipfs/${addImage.path}`;
       console.log(`URL of ${filePath}`, dataURL);
     } catch (error) {
-      console.log(`addImage[0].path value: ${addImage[0].path}`);
+      console.log(`addImage[0].path value: ${addImage.path}`);
       console.log(`Error uploading file: ${filePath}`, error);
     }
 
-    //assert.ok(addImage[0].path);
+    //assert.ok(addImage.path);
 
   });
 
@@ -121,14 +140,14 @@ describe('Testing IPFSstorage on mainfork', () => {
     try {
       const addMetadata = await client.add(buf);
       console.log(addMetadata);
-      metadataURL = `https://ipfs.infura/ipfs/${addMetadata[0].path}`;
+      metadataURL = `https://ipfs.infura.io/ipfs/${addMetadata.path}`;
       /* after metadata is uploaded to IPFS, return the URL to use it in the transaction */
       console.log('Metadata URL', metadataURL);
     } catch (error) {
       console.log('Error uploading metada file: ', error)
     }
 
-    //assert.ok(addMetadata[0].path);
+    //assert.ok(addMetadata.path);
   });
 
 
